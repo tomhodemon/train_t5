@@ -62,7 +62,7 @@ def main(args):
 
             if global_step % cfg.train.logging_steps == 0:
                 writer.add_scalar('Loss/train', loss.item(), global_step)
-                writer.add_scalar('Learning Rate', scheduler.get_last_lr(), global_step)
+                writer.add_scalar('Learning Rate', scheduler.get_last_lr()[0], global_step)
                 logger.info(f"Loss/train: {loss.item()}")
 
             if global_step % cfg.train.eval_steps == 0:

@@ -14,7 +14,7 @@ optimizer:
 train:
   batch_size: 32
   max_seq_len: 128
-  max_steps: 50_000
+  max_steps: 20_000
   logging_steps: 50
   eval_steps: 300
   epochs: 3
