@@ -19,11 +19,11 @@ def main(args):
     
     cfg = load_config(args.cfg)
     
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    logger.info(f"Using {device} device")
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    logger.info(f'Using {device} device')
     
     tokenizer = T5Tokenizer.from_pretrained(cfg.tokenizer.name)
-    logger.info(f"Vocab size: {len(tokenizer)}")
+    logger.info(f'Vocab size: {len(tokenizer)}')
 
     model_config = T5Config.from_pretrained(cfg.model.name, vocab_size=len(tokenizer))
     model = T5ForConditionalGeneration(model_config).to(device)
@@ -43,11 +43,7 @@ def main(args):
     optimizer = Adafactor(model.parameters(), lr=cfg.optimizer.base_lr, relative_step=False)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: scheduler_factor(step))
 
-    # ensures that the number of steps exceeds 50k even if we stop training at 50k
-
     global_step = 0
-
-    print(next(iter(train_dataloader)))
     
     exit(0)
 
