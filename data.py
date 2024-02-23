@@ -149,7 +149,7 @@ class Builder:
         if not os.path.exists(path):
             os.makedirs(path)
 
-        torch.save(self._processed_dataset, os.path.join(path, name))
+        torch.save(self._processed_dataset.dataset, os.path.join(path, name))
         self.logger.info('Dataset saved successfully')
 
     def get_processed_dataset(self) -> datasets.Dataset:
@@ -173,7 +173,6 @@ class ProcessedDataset(datasets.Dataset):
 
     @staticmethod   
     def collate_fn(batch):
-        print(batch)
         Xs = [torch.LongTensor(item['input_ids']) for item in batch]
         ys = [torch.LongTensor(item['labels']) for item in batch]
 
@@ -204,7 +203,7 @@ if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--cfg', type=str, default='./config/default.yaml')
+    parser.add_argument('--cfg', type=str, default='config/default.yaml')
     args = parser.parse_args()
     cfg = load_config(args.cfg)
 

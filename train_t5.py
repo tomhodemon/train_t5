@@ -44,8 +44,6 @@ def main(args):
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: scheduler_factor(step))
 
     global_step = 0
-    
-    exit(0)
 
     for epoch in range(cfg.train.epochs):
         loop = tqdm(train_dataloader, leave=True)
@@ -89,7 +87,7 @@ def main(args):
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser()
-    parser.add_argument("--cfg", type=str, default="./config/default.yaml")
+    parser.add_argument("--cfg", type=str, default="config/default.yaml")
     parser.add_argument("--train_path", type=str, default="data/processed/processed_train_dataset.pt")
     parser.add_argument("--validation_path", type=str, default="data/processed/processed_validation_dataset.pt")
     args = parser.parse_args()
