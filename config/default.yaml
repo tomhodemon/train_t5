@@ -10,11 +10,15 @@ tokenizer:
 model:
   name: "t5-small"
 optimizer:
+  # The paper does not mention any particular learning rate value. It only states:
+  # "During pre-training, we use an “inverse square root” learning rate schedule... 
+  # This sets a constant learning rate of 0.01 for the first 10e4 steps, 
+  # then exponentially  decays the learning rate until pre-training is over."
   base_lr: 1
 train:
   batch_size: 32
-  max_seq_len: 128
-  max_steps: 20_000
+  max_seq_len: 128 # do not change!
+  max_steps: 10_000
   logging_steps: 50
-  eval_steps: 300
+  eval_steps: 200
   epochs: 3

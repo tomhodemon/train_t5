@@ -3,6 +3,7 @@ import numpy as np
 from easydict import EasyDict
 import yaml
 import logging
+from datetime import datetime
 
 def scheduler_factor(k: int) -> float:
     n = 10000
@@ -35,3 +36,6 @@ def get_logger(name: str):
     handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     logger.addHandler(handler)
     return logger
+
+def get_time():
+    return datetime.now().strftime("%b%d_%H-%M-%S")
