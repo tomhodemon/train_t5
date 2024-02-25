@@ -9,15 +9,14 @@ from torch.utils.data import DataLoader
 import argparse
 from tqdm import tqdm
 
-from utils import scheduler_factor, load_config, get_logger
+from utils import scheduler_factor, load_config, get_logger, get_time
 from data import ProcessedDataset
 
 def main(args):
+    cfg = load_config(args.cfg)
 
     logger = get_logger('Main')
-    writer = SummaryWriter()
-    
-    cfg = load_config(args.cfg)
+    writer = SummaryWriter(f'runs/{get_time()}_T5-config-{cfg.name}', flush_secs=30)
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     logger.info(f'Using {device} device')
@@ -34,11 +33,6 @@ def main(args):
 
     validation_dataset = torch.load(args.validation_path)
     validation_dataloader = DataLoader(validation_dataset, batch_size=cfg.train.batch_size, collate_fn=ProcessedDataset.collate_fn)
-
-    # The paper does not mention any particular learning rate value. It only states:
-    # "During pre-training, we use an “inverse square root” learning rate schedule... 
-    # This sets a constant learning rate of 0.01 for the first 10e4 steps, 
-    # then exponentially  decays the learning rate until pre-training is over."
 
     optimizer = Adafactor(model.parameters(), lr=cfg.optimizer.base_lr, relative_step=False)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: scheduler_factor(step))
@@ -63,7 +57,6 @@ def main(args):
             if global_step % cfg.train.logging_steps == 0:
                 writer.add_scalar('Loss/train', loss.item(), global_step)
                 writer.add_scalar('Learning Rate', scheduler.get_last_lr()[0], global_step)
-                logger.info(f"Loss/train: {loss.item()}")
 
             if global_step % cfg.train.eval_steps == 0:
                 model.eval()
@@ -78,7 +71,6 @@ def main(args):
 
                 total_loss /= len(validation_dataloader)
                 writer.add_scalar('Loss/Validation', total_loss, global_step)
-                logger.info(f"Loss/Validation: {total_loss}")
                 model.train()
 
             if global_step >= cfg.train.max_steps:
