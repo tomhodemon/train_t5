@@ -12,7 +12,7 @@ def scheduler_factor(k: int) -> float:
     else:
         return pow(k, -0.5)
     
-def generate_all_combinations(target_sum, combinaison_length, mean):
+def generate_all_combinations(target_sum: int, combinaison_length: int, mean: int) -> np.ndarray[np.ndarray[int]]:
     values = range(1, target_sum)
     combinaisons = list(itertools.combinations_with_replacement(values, combinaison_length))
 
@@ -24,12 +24,12 @@ def generate_all_combinations(target_sum, combinaison_length, mean):
     return np.array(valid_combinations)
 
 
-def load_config(cfg_path):
+def load_config(cfg_path: str) -> EasyDict:
     with open(cfg_path, "r") as file:
         cfg = EasyDict(yaml.safe_load(file))
     return cfg
 
-def get_logger(name: str):
+def get_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)
     handler = logging.StreamHandler()
@@ -37,5 +37,5 @@ def get_logger(name: str):
     logger.addHandler(handler)
     return logger
 
-def get_time():
+def get_time() -> str:
     return datetime.now().strftime("%b%d_%H-%M-%S")
