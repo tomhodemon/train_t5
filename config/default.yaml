@@ -4,11 +4,12 @@ data:
   mean_corrupted_span_length: 3.0 # from paper
   input_length: 141 # input length before corruption (has been found empirically)
   target_length: 29 # target length generated from corrupted input (deduced from input_length)
-  save_path: "data/processed"
 tokenizer:
   name: "t5-small"
 model:
   name: "t5-small"
+  share_decoder_ffn: false
+  share_encoder_ffn: false
 optimizer:
   # The paper does not mention any particular learning rate value. It only states:
   # "During pre-training, we use an “inverse square root” learning rate schedule... 
@@ -16,9 +17,10 @@ optimizer:
   # then exponentially  decays the learning rate until pre-training is over."
   base_lr: 1
 train:
-  batch_size: 32
-  max_seq_len: 128 # do not change!
-  max_steps: 10_000
-  logging_steps: 50
-  eval_steps: 200
-  epochs: 3
+  seed: 45
+  batch_size: 128
+  max_seq_len: 512
+  max_steps: 1000
+  logging_steps: 20
+  eval_steps: 50
+  epochs: 1

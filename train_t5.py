@@ -9,15 +9,21 @@ from torch.utils.data import DataLoader
 import argparse
 from tqdm import tqdm
 
-from utils import scheduler_factor, load_config, get_logger, get_time
+from utils import scheduler_factor, load_config, get_logger, get_time, share_feed_forward
 from data import ProcessedDataset
-
+    
 
 def main(args):
     cfg = load_config(args.cfg)
 
     logger = get_logger('main')
-    writer = SummaryWriter(f'runs/{get_time()}_T5-config-{cfg.name}', flush_secs=30)
+    logger.info(f"Config: {cfg}")
+
+    torch.manual_seed(cfg.train.seed)
+    torch.cuda.manual_seed(cfg.train.seed)
+
+    run_name = f'{get_time()}_T5-cfg-{cfg.name}-share_enc_ffn-{cfg.model.share_encoder_ffn}-share_dec_ffn-{cfg.model.share_decoder_ffn}'
+    writer = SummaryWriter(f'runs/{run_name}', flush_secs=30)
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     logger.info(f'Using {device} device')
@@ -26,14 +32,18 @@ def main(args):
     logger.info(f'Vocab size: {len(tokenizer)}')
 
     model_config = T5Config.from_pretrained(cfg.model.name, vocab_size=len(tokenizer))
-    model = T5ForConditionalGeneration(model_config).to(device)
-    logger.info(f"{sum(p.numel() for p in model.parameters())/1e6}M parameters")
+    model = T5ForConditionalGeneration(model_config)
+    model = share_feed_forward(model, cfg.model.share_encoder_ffn, cfg.model.share_decoder_ffn)
+    model = model.to(device)
+
+    logger.info(f"Model is shared: \n\tEncoder: {cfg.model.share_encoder_ffn} \n\tDecoder: {cfg.model.share_decoder_ffn}")
+    logger.info(f"Model has {sum(p.numel() for p in model.parameters())/1e6}M parameters")
 
     train_dataset = torch.load(args.train_path, weights_only=False)
-    train_dataloader = DataLoader(train_dataset, batch_size=cfg.train.batch_size, collate_fn=ProcessedDataset.collate_fn)
+    train_dataloader = DataLoader(train_dataset, batch_size=cfg.train.batch_size, collate_fn=ProcessedDataset.collate_fn, shuffle=False)
 
     validation_dataset = torch.load(args.validation_path, weights_only=False)
-    validation_dataloader = DataLoader(validation_dataset, batch_size=cfg.train.batch_size, collate_fn=ProcessedDataset.collate_fn)
+    validation_dataloader = DataLoader(validation_dataset, batch_size=cfg.train.batch_size, collate_fn=ProcessedDataset.collate_fn, shuffle=False)
 
     optimizer = Adafactor(model.parameters(), lr=cfg.optimizer.base_lr, relative_step=False)
     scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lambda step: scheduler_factor(step))
