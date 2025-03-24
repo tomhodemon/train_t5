@@ -9,6 +9,7 @@ from typing import Optional
 from easydict import EasyDict
 import random
 
+
 class Builder:
     def __init__(self, 
                  cfg: EasyDict, 
@@ -108,7 +109,8 @@ class Builder:
             batched=True,
             batch_size=1000,
             drop_last_batch=False,
-            remove_columns=['text']
+            remove_columns=['text'],
+            num_proc=20
         )
 
         packed_and_tokenized_dataset = tokenized_dataset.map(
@@ -116,7 +118,8 @@ class Builder:
             batched=True,
             batch_size=1000,
             drop_last_batch=False,
-            fn_kwargs={'input_length': input_length}
+            fn_kwargs={'input_length': input_length},
+            num_proc=20
         )
 
         self._processed_dataset = packed_and_tokenized_dataset.map(
@@ -128,7 +131,8 @@ class Builder:
                 'token_span_combinaisons_1': token_span_combinaisons_1,
                 'token_span_combinaisons_2': token_span_combinaisons_2,
                 'sentinel_ids': sentinel_ids
-            }
+            },
+            num_proc=20
         )
 
         self._processed_dataset = ProcessedDataset(self._processed_dataset, self.cfg)
@@ -162,7 +166,8 @@ class Builder:
     def __repr__(self) -> str:
         tokenizer_info = f'Tokenizer={self.tokenizer.__class__.__name__}'
         return f'Builder(cfg={self.cfg.name}, {tokenizer_info}, {repr(self._processed_dataset)})'
-        
+
+
 class ProcessedDataset(datasets.Dataset):
     def __init__(self, 
                  dataset: datasets.Dataset,
@@ -204,6 +209,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser()
     parser.add_argument('--cfg', type=str, default='config/default.yaml')
+    parser.add_argument('--save_path', type=str, default=None)
     args = parser.parse_args()
     cfg = load_config(args.cfg)
 
@@ -213,8 +219,8 @@ if __name__ == '__main__':
     
     builder.load_dataset(split='train')
     builder.process_dataset()
-    builder.save_dataset()
+    builder.save_dataset(path=args.save_path)
 
     builder.load_dataset(split='validation')
     builder.process_dataset()
-    builder.save_dataset()
+    builder.save_dataset(path=args.save_path)

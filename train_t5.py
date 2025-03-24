@@ -12,10 +12,11 @@ from tqdm import tqdm
 from utils import scheduler_factor, load_config, get_logger, get_time
 from data import ProcessedDataset
 
+
 def main(args):
     cfg = load_config(args.cfg)
 
-    logger = get_logger('Main')
+    logger = get_logger('main')
     writer = SummaryWriter(f'runs/{get_time()}_T5-config-{cfg.name}', flush_secs=30)
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -28,10 +29,10 @@ def main(args):
     model = T5ForConditionalGeneration(model_config).to(device)
     logger.info(f"{sum(p.numel() for p in model.parameters())/1e6}M parameters")
 
-    train_dataset = torch.load(args.train_path)
+    train_dataset = torch.load(args.train_path, weights_only=False)
     train_dataloader = DataLoader(train_dataset, batch_size=cfg.train.batch_size, collate_fn=ProcessedDataset.collate_fn)
 
-    validation_dataset = torch.load(args.validation_path)
+    validation_dataset = torch.load(args.validation_path, weights_only=False)
     validation_dataloader = DataLoader(validation_dataset, batch_size=cfg.train.batch_size, collate_fn=ProcessedDataset.collate_fn)
 
     optimizer = Adafactor(model.parameters(), lr=cfg.optimizer.base_lr, relative_step=False)
