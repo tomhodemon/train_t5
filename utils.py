@@ -6,9 +6,12 @@ import yaml
 import logging
 from datetime import datetime
 
-
 from transformers import T5ForConditionalGeneration, T5Config
 from transformers.models.t5.modeling_t5 import T5LayerFF
+
+
+def get_run_name(cfg: EasyDict) -> str:
+    return f'{get_time()}_T5-cfg-{cfg.name}-drop_enc_ffn-{cfg.model.drop_encoder_ffn}-drop_dec_ffn-{cfg.model.drop_decoder_ffn}-share_enc_ffn-{cfg.model.share_encoder_ffn}-share_dec_ffn-{cfg.model.share_decoder_ffn}'
 
 
 def get_model(cfg: EasyDict, 

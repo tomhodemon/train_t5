@@ -1,15 +1,12 @@
 import torch
-from transformers import (T5Tokenizer,
-                          T5ForConditionalGeneration,
-                          T5Config,
-                          Adafactor)
+from transformers import (T5Tokenizer, Adafactor)
 from torch.utils.tensorboard import SummaryWriter
 from torch.utils.data import DataLoader
 
 import argparse
 from tqdm import tqdm
 
-from utils import scheduler_factor, load_config, get_logger, get_time, get_model
+from utils import scheduler_factor, load_config, get_logger, get_run_name, get_model
 from data import ProcessedDataset
     
 
@@ -22,7 +19,7 @@ def main(args):
     torch.manual_seed(cfg.train.seed)
     torch.cuda.manual_seed(cfg.train.seed)
 
-    run_name = f'{get_time()}_T5-cfg-{cfg.name}-drop_enc_ffn-{cfg.model.drop_encoder_ffn}-drop_dec_ffn-{cfg.model.drop_decoder_ffn}-share_enc_ffn-{cfg.model.share_encoder_ffn}-share_dec_ffn-{cfg.model.share_decoder_ffn}'
+    run_name = get_run_name(cfg)
     writer = SummaryWriter(f'runs/{run_name}', flush_secs=30)
     
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
@@ -34,7 +31,7 @@ def main(args):
     model = get_model(cfg, len(tokenizer))
     model = model.to(device)
 
-    logger.info(f"Model nomenclature: {cfg.model.drop_decoder_ffn=} {cfg.model.drop_encoder_ffn=} {cfg.model.share_encoder_ffn=} {cfg.model.share_decoder_ffn=}")
+    logger.info(f"Model nomenclature: drop_encoder_ffn={cfg.model.drop_encoder_ffn} drop_decoder_ffn={cfg.model.drop_decoder_ffn} share_encoder_ffn={cfg.model.share_encoder_ffn} share_decoder_ffn={cfg.model.share_decoder_ffn}")
     logger.info(f"Model has {sum(p.numel() for p in model.parameters())/1e2}M parameters")
 
     train_dataset = torch.load(args.train_path, weights_only=False)
