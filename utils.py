@@ -1,4 +1,5 @@
 import itertools
+import torch.nn as nn
 import numpy as np
 from easydict import EasyDict
 import yaml
@@ -6,37 +7,49 @@ import logging
 from datetime import datetime
 
 
-from transformers import T5ForConditionalGeneration
+from transformers import T5ForConditionalGeneration, T5Config
 from transformers.models.t5.modeling_t5 import T5LayerFF
 
 
-def share_feed_forward(model: T5ForConditionalGeneration, 
+def get_model(cfg: EasyDict, vocab_size: int) -> T5ForConditionalGeneration:
+
+    model_config = T5Config.from_pretrained(cfg.model.name, vocab_size=vocab_size)
+    model = T5ForConditionalGeneration.from_pretrained(model_config)
+
+    if not cfg.model.drop_decoder_ffn or not cfg.model.drop_encoder_ffn:
+        model = drop_ffn(model, cfg.model.drop_encoder_ffn, cfg.model.drop_decoder_ffn) 
+    else:
+        model = share_ffn(model, cfg.model.share_encoder_ffn, cfg.model.share_decoder_ffn)
+
+    return model
+
+def drop_ffn(model: T5ForConditionalGeneration, 
+             drop_encoder_ffn: bool = False, 
+             drop_decoder_ffn: bool = False) -> T5ForConditionalGeneration:
+    if drop_encoder_ffn:
+        for block in model.encoder.block:
+            block.layer[1] = nn.Identity()
+
+    if drop_decoder_ffn:
+        for block in model.decoder.block:
+            block.layer[2] = nn.Identity()
+
+    return model
+
+def share_ffn(model: T5ForConditionalGeneration, 
                        share_encoder_ffn: bool = False, 
                        share_decoder_ffn: bool = False) -> T5ForConditionalGeneration:
-    """
-    Modify a T5 model to share feed-forward layers in encoder and/or decoder.
-    
-    Args:
-        model: The T5 model to modify
-        share_encoder_ffn: Whether to share feed-forward layers in the encoder
-        share_decoder_ffn: Whether to share feed-forward layers in the decoder
-    """
     if share_encoder_ffn:
-        # Create a shared feed-forward layer for encoder
         shared_encoder_ff = T5LayerFF(model.encoder.config)
-        # Replace all feed-forward layers in encoder blocks with the shared one
         for block in model.encoder.block:
             block.layer[1] = shared_encoder_ff
 
     if share_decoder_ffn:
-        # Create a shared feed-forward layer for decoder
         shared_decoder_ff = T5LayerFF(model.decoder.config)
-        # Replace all feed-forward layers in decoder blocks with the shared one
         for block in model.decoder.block:
             block.layer[2] = shared_decoder_ff
 
     return model
-
 
 def scheduler_factor(k: int) -> float:
     n = 10000

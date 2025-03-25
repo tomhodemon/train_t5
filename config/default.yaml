@@ -8,6 +8,8 @@ tokenizer:
   name: "t5-small"
 model:
   name: "t5-small"
+  drop_decoder_ffn: false
+  drop_encoder ffn: false
   share_decoder_ffn: false
   share_encoder_ffn: false
 optimizer:
