@@ -11,10 +11,11 @@ from transformers import T5ForConditionalGeneration, T5Config
 from transformers.models.t5.modeling_t5 import T5LayerFF
 
 
-def get_model(cfg: EasyDict, vocab_size: int) -> T5ForConditionalGeneration:
+def get_model(cfg: EasyDict, 
+              vocab_size: int) -> T5ForConditionalGeneration:
 
     model_config = T5Config.from_pretrained(cfg.model.name, vocab_size=vocab_size)
-    model = T5ForConditionalGeneration.from_pretrained(model_config)
+    model = T5ForConditionalGeneration(model_config)
     
     if cfg.model.drop_decoder_ffn and cfg.model.share_decoder_ffn:
         print(f"Imcompatible nomenclature: {cfg.model.drop_decoder_ffn=} and {cfg.model.share_encoder_ffn=}")
