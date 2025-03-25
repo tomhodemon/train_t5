@@ -15,11 +15,17 @@ def get_model(cfg: EasyDict, vocab_size: int) -> T5ForConditionalGeneration:
 
     model_config = T5Config.from_pretrained(cfg.model.name, vocab_size=vocab_size)
     model = T5ForConditionalGeneration.from_pretrained(model_config)
+    
+    if cfg.model.drop_decoder_ffn and cfg.model.share_decoder_ffn:
+        print(f"Imcompatible nomenclature: {cfg.model.drop_decoder_ffn=} and {cfg.model.share_encoder_ffn=}")
+        exit()
 
-    if not cfg.model.drop_decoder_ffn or not cfg.model.drop_encoder_ffn:
-        model = drop_ffn(model, cfg.model.drop_encoder_ffn, cfg.model.drop_decoder_ffn) 
-    else:
-        model = share_ffn(model, cfg.model.share_encoder_ffn, cfg.model.share_decoder_ffn)
+    if cfg.model.drop_encoder_ffn and cfg.model.share_encoder_ffn:
+        print(f"Imcompatible nomenclature: {cfg.model.drop_encoder_ffn=} and {cfg.model.share_encoder_ffn=}")
+        exit()
+    
+    model = share_ffn(model, cfg.model.share_encoder_ffn, cfg.model.share_decoder_ffn)
+    model = drop_ffn(model, cfg.model.drop_encoder_ffn, cfg.model.drop_decoder_ffn) 
 
     return model
 
